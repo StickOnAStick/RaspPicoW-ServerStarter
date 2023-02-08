@@ -3,11 +3,14 @@ import socket
 from time import sleep
 #from picozero import pico_temp_sensor, pico_led
 import machine
+from machine import Pin, Timer
 from secrets import secrets
 import gc
 
 ssid = secrets['ssid']
 password = secrets['pw']
+led = Pin("LED", Pin.OUT) #Onboard led 
+led.off()
 
 MAC = b"\x38\xd5\x47\xaf\x99\xd7" #38:d5:47:af:99:d7
 BROADCAST_ADDR = '10.0.0.255'
@@ -74,23 +77,31 @@ def serve(connection):
             print("Turn Server on!")
             
             soc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            print(soc)
             soc.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR,1)
             soc.sendto(MSG, (BROADCAST_ADDR, PORT))
-            
-            state = 'ON'
+            #state
+            state = 'ON' if state != 'ON' else 'OFF'
+            led.toggle()
+            gc.collect()
         elif request == '/login?':
             print('Login!')
             state = 'OFF'
+            
         html = webpage(temp, state)
+        #garbage collection
+        print("Allocated: ", gc.mem_alloc(), "\nFree: ", gc.mem_free())
         client.send(html)
         client.close()
 
+
+
 try:
+    
     gc.enable()
-    print("Allocated: ", gc.mem_alloc(), "\nFree: ", gc.mem_free())
     ip = connect()
     connection = open_socket(ip)
     serve(connection)
 except KeyboardInterrupt:
+    print("Error occured... Reseting")
     machine.reset()
+    

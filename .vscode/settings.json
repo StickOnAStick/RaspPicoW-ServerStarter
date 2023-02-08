@@ -9,5 +9,17 @@
         ".vscode\\Pico-W-Stub\\stubs"
     ],
     "picowgo.syncFolder": "",
-    "picowgo.openOnStart": true
+    "picowgo.openOnStart": true,
+    "picowgo.safeBootOnUpload": false,
+    "picowgo.ctrlCOnConnect": false,
+    "picowgo.pyIgnore": [
+        ".picowgo",
+        ".vscode",
+        ".gitignore",
+        ".git",
+        "project.pico-go",
+        "env",
+        "venv",
+        
+    ]
 }
