@@ -1,9 +1,8 @@
 import network
 import socket
 from time import sleep
-#from picozero import pico_temp_sensor, pico_led
 import machine
-from machine import Pin, Timer
+from machine import Pin
 from secrets import secrets
 import gc
 
@@ -31,7 +30,7 @@ def connect():
 
 def open_socket(ip):
     #ip / port
-    address = ('0.0.0.0', 80)
+    address = (ip, 80)
     connection = socket.socket()
     connection.bind(address)
     connection.listen(1)
@@ -46,8 +45,8 @@ def webpage(temp, state):
             <meta charset="UTF-8">
         </head>
     <body>
-    <form action="./login">
-        <input type="text" placeholder="Enter Pass">
+    <form action="./login" method="post">
+        <input type="text" placeholder="Enter Pass" id="login" name="Pass">
         <input type="submit" value="submit">
     </form>
     <form action="./serverOn">
@@ -65,11 +64,17 @@ def serve(connection):
     temp = 0
     while True:
         client = connection.accept()[0]
-        request = client.recv(1024)
+        request = client.recv(1024) #buffer size to recieve for client.
+        
+        
         request = str(request)
-        #print(request)
+        print("\n2nd Request: \n",request)
+        
+        
         try: 
             request = request.split()[1]
+            
+            
         except IndexError:
             pass
         
@@ -84,24 +89,27 @@ def serve(connection):
             led.toggle()
             gc.collect()
         elif request == '/login?':
+            
             print('Login!')
             state = 'OFF'
+            gc.collect()
             
         html = webpage(temp, state)
         #garbage collection
-        print("Allocated: ", gc.mem_alloc(), "\nFree: ", gc.mem_free())
+        if gc.mem_free() <= 142160: #arbitrary, based off 3 requests without cleanup
+            gc.collect()
+        print("Allocated: ", gc.mem_alloc(), "\nFree: ", gc.mem_free(),"\n")
         client.send(html)
         client.close()
 
 
 
 try:
-    
     gc.enable()
     ip = connect()
     connection = open_socket(ip)
     serve(connection)
 except KeyboardInterrupt:
     print("Error occured... Reseting")
-    machine.reset()
+    machine.soft_reset()
     
